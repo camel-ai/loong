@@ -2,6 +2,8 @@ from unsloth import FastLanguageModel
 import torch
 import json
 from tqdm import tqdm
+import argparse
+from dataclasses import dataclass
 import pandas as pd
 from transformers import TextStreamer
 from typing import Dict, List
@@ -13,15 +15,43 @@ import os
 from huggingface_hub import login
 from camel.logger import get_logger, set_log_level
 
+@dataclass
+class EvalConfig:
+    base_model: str = "Qwen/Qwen2.5-7B"
+    ft_model: str = "fintuned_model_name"
+    dataset_name: str = "EleutherAI/hendrycks_math"
+    split: str = "test"
+    num_samples: int = None
+    output_dir: str = "eval_results"
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='Model Evaluation Arguments')
+    
+    parser.add_argument('--base-model', type=str, default="Qwen/Qwen2.5-7B",
+                      help='Base model to evaluate (default: Qwen/Qwen2.5-7B)')
+    parser.add_argument('--ft-model', type=str, default="fintuned_model_name",
+                      help='Fine-tuned model to evaluate')
+    parser.add_argument('--dataset', type=str, default="EleutherAI/hendrycks_math",
+                      help='Dataset name on HuggingFace (default: EleutherAI/hendrycks_math)')
+    parser.add_argument('--split', type=str, default="test",
+                      help='Dataset split to use (default: test)')
+    parser.add_argument('--num-samples', type=int, default=None,
+                      help='Number of samples to evaluate (default: all)')
+    parser.add_argument('--output-dir', type=str, default="eval_results",
+                      help='Directory to save evaluation results')
+    
+    return parser
+
 # Set up CAMEL logger
 logger = get_logger(__name__)
 set_log_level('INFO')
 
 class ModelEvaluator:
-    def __init__(self, hf_token: str = None):
+    def __init__(self, config: EvalConfig, hf_token: str = None):
         """
-        Initialize the evaluator with optional Hugging Face token
+        Initialize the evaluator with config and optional Hugging Face token
         """
+        self.config = config
         self.hf_token = hf_token
         if hf_token:
             login(token=hf_token)
@@ -30,6 +60,10 @@ class ModelEvaluator:
         self.base_tokenizer = None
         self.ft_model = None
         self.ft_tokenizer = None
+        
+        # Create output directory with tag
+        self.output_dir = os.path.join(config.output_dir)
+        os.makedirs(self.output_dir, exist_ok=True)
         
     async def setup(self):
         """
@@ -50,10 +84,10 @@ class ModelEvaluator:
         """
         Load the base and fine-tuned models
         """
-        logger.info("Loading base model...")
+        logger.info(f"Loading base model: {self.config.base_model}")
         try:
             self.base_model, self.base_tokenizer = FastLanguageModel.from_pretrained(
-                model_name="Qwen/Qwen2.5-7B",
+                model_name=self.config.base_model,
                 max_seq_length=2048,
                 dtype=torch.float16,
                 load_in_4bit=True
@@ -64,10 +98,10 @@ class ModelEvaluator:
             logger.error(f"Error loading base model: {e}")
             raise
         
-        logger.info("Loading fine-tuned model...")
+        logger.info(f"Loading fine-tuned model: {self.config.ft_model}")
         try:
             self.ft_model, self.ft_tokenizer = FastLanguageModel.from_pretrained(
-                model_name="fintuned_model_name",
+                model_name=self.config.ft_model,
                 max_seq_length=2048,
                 dtype=torch.float16,
                 load_in_4bit=True
@@ -227,40 +261,70 @@ class ModelEvaluator:
         """
         try:
             # Save detailed results to CSV
+            results_file = os.path.join(self.output_dir, 'evaluation_results.csv')
             df = pd.DataFrame(results)
-            df.to_csv('evaluation_results.csv', index=False)
-            logger.info("Detailed results saved to evaluation_results.csv")
+            df.to_csv(results_file, index=False)
+            logger.info(f"Detailed results saved to {results_file}")
             
             # Save summary metrics
             summary = {
-                'base_model': base_metrics,
-                'fine_tuned_model': ft_metrics,
+                'base_model': {
+                    'name': self.config.base_model,
+                    **base_metrics
+                },
+                'fine_tuned_model': {
+                    'name': self.config.ft_model,
+                    **ft_metrics
+                },
+                'dataset': {
+                    'name': self.config.dataset_name,
+                    'split': self.config.split,
+                    'num_samples': len(results)
+                },
+                'tag': self.config.tag,
                 'timestamp': pd.Timestamp.now().isoformat()
             }
-            with open('evaluation_summary.json', 'w') as f:
+            
+            metrics_file = os.path.join(self.output_dir, 'evaluation_summary.json')
+            with open(metrics_file, 'w') as f:
                 json.dump(summary, f, indent=2)
-            logger.info("Summary metrics saved to evaluation_summary.json")
+            logger.info(f"Summary metrics saved to {metrics_file}")
         except Exception as e:
             logger.error(f"Error saving results: {e}")
 
 async def main():
+    # Parse command line arguments
+    parser = get_parser()
+    args = parser.parse_args()
+    
+    # Create config from arguments
+    config = EvalConfig(
+        base_model=args.base_model,
+        ft_model=args.ft_model,
+        dataset_name=args.dataset,
+        split=args.split,
+        num_samples=args.num_samples,
+        output_dir=args.output_dir,
+        tag=args.tag
+    )
+    
     # Check for HF token in environment
     hf_token = os.getenv("HUGGINGFACE_TOKEN")
     if not hf_token:
         logger.warning("No Hugging Face token found in environment variables")
-        hf_token = "your_hf_token_here"  
+        hf_token = "your_hf_token_here"
     
     try:
-        # Initialize evaluator
-        evaluator = ModelEvaluator(hf_token=hf_token)
+        # Initialize evaluator with config
+        evaluator = ModelEvaluator(config=config, hf_token=hf_token)
         
         # Setup evaluator
         await evaluator.setup()
         
         # Run evaluation
         await evaluator.evaluate(
-            dataset_name="EleutherAI/hendrycks_math",  
-            num_samples = None
+            dataset_name=config.dataset_name,
+            num_samples=config.num_samples
         )
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
