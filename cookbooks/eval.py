@@ -17,7 +17,7 @@ from camel.logger import get_logger, set_log_level
 
 @dataclass
 class EvalConfig:
-    base_model: str = "Qwen/Qwen2.5-7B"
+    base_model: str = "unsloth/Qwen2.5-7B-Instruct"
     ft_model: str = "fintuned_model_name"
     dataset_name: str = "EleutherAI/hendrycks_math"
     split: str = "test"
@@ -27,8 +27,8 @@ class EvalConfig:
 def get_parser():
     parser = argparse.ArgumentParser(description='Model Evaluation Arguments')
     
-    parser.add_argument('--base-model', type=str, default="Qwen/Qwen2.5-7B",
-                      help='Base model to evaluate (default: Qwen/Qwen2.5-7B)')
+    parser.add_argument('--base-model', type=str, default="unsloth/Qwen2.5-7B-Instruct",
+                      help='Base model to evaluate (default: unsloth/Qwen2.5-7B-Instruct)')
     parser.add_argument('--ft-model', type=str, default="fintuned_model_name",
                       help='Fine-tuned model to evaluate')
     parser.add_argument('--dataset', type=str, default="EleutherAI/hendrycks_math",
