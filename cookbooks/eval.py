@@ -112,20 +112,20 @@ class ModelEvaluator:
             logger.error(f"Error loading fine-tuned model: {e}")
             raise
 
-    def extract_boxed_answer(self, text: str) -> str:
+    async def extract_boxed_answer(self, text: str) -> str:
         """
         Extract answer from boxed notation in the text
         Returns cleaned answer or original text if no boxed answer found
         """
         try:
-            extractions = self.extractor.extract(text)
+            extractions = await self.extractor.extract(text)
             if extractions and len(extractions) > 0:
                 return extractions[0].strip().lower()
         except Exception as e:
             logger.error(f"Extraction error: {e}")
         return text.strip().lower()
 
-    def calculate_metrics(self, predictions: List[str], ground_truths: List[str]) -> Dict[float]:
+    async def calculate_metrics(self, predictions: List[str], ground_truths: List[str]) -> Dict[float]:
         """
         Calculate accuracy metrics comparing predictions against ground truths using the extractor
         """
@@ -133,8 +133,8 @@ class ModelEvaluator:
         total = len(ground_truths)
         
         for pred, truth in zip(predictions, ground_truths):
-            cleaned_pred = self.extract_boxed_answer(pred)
-            cleaned_truth = self.extract_boxed_answer(truth)
+            cleaned_pred = await self.extract_boxed_answer(pred)
+            cleaned_truth = await self.extract_boxed_answer(truth)
             
             if cleaned_pred == cleaned_truth:
                 correct += 1
