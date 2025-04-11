@@ -19,7 +19,7 @@ logging.basicConfig(
 def main():
     # Define the base data directory
     data_dir = Path(__file__).parent
-    
+
     # Define the domains to process with their paths
     domain_paths = {
         "advanced_math": data_dir / "advanced_math" / "seed_dataset.json",
@@ -34,7 +34,7 @@ def main():
     }
     # Dictionary to hold all domain data
     all_domains_data = {}
-    
+
     # Process each domain
     for domain, domain_path in domain_paths.items():
         if domain_path.exists():

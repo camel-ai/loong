@@ -1,0 +1,68 @@
+name: Execute and Compare Datasets
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
+
+jobs:
+  validate-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12.0
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12.0'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas matplotlib numpy tqdm sympy
+        pip install -e .
+    
+    - name: Combine seed datasets
+      run: |
+        cd data
+        python combine_seed_datasets.py
+      
+    - name: Execute and compare data
+      id: validation
+      continue-on-error: true
+      run: |
+        cd data
+        python execute_and_compare.py
+        
+        # Check if the execution_comparison_results.json file exists
+        if [ -f "execution_comparison_results.json" ]; then
+          echo "validation_status=success" >> $GITHUB_OUTPUT
+        else
+          echo "validation_status=failure" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Upload validation results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: validation-results
+        path: |
+          data/execution_comparison_results.json
+          data/execution_comparison_visualizations/
+          data/detailed_domain_results/
+          data/seed_dataset_all_domain.json
+    
+    - name: Check validation status
+      if: always()
+      run: |
+        if [ "${{ steps.validation.outputs.validation_status }}" = "success" ]; then
+          echo "✅ Validation completed successfully"
+          exit 0
+        else
+          echo "❌ Validation failed"
+          exit 1
+        fi
