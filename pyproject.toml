@@ -9,6 +9,7 @@ description = "Loong project"
 requires-python = ">=3.10"
 dependencies = [
     "camel-ai[all]==0.2.43",
+    "antlr4-python3-runtime==4.11"
 ]
 
 [tool.setuptools]

@@ -1,0 +1,36 @@
+name: Domain Validation
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12.0
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12.0'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install camel-ai[verifiers]==0.2.43
+        pip install Pillow
+        pip install antlr4-python3-runtime==4.11
+        pip install numpy==1.26.4
+        pip install sympy==1.13.3
+        pip install uv==0.6.12
+    
+    - name: Run validation
+      run: |
+        cd data
+        python execute_compare_action.py
