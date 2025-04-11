@@ -34,6 +34,7 @@ Each datapoint **must** follow this schema:
     "license": "CC BY 4.0",
     "source": "Basic Arithmetic, 1992",
     "domain": "Mathematics",
+    "python_version": "3.10.0",
     "required_dependencies": ["numpy==2.2.4", "pandas==2.2.4"],
     "name": "Loong_Mathematics",
     "contributor": "Zeyu Zhang",
@@ -53,6 +54,7 @@ Each datapoint **must** follow this schema:
   - `license`: Licensing info (e.g., `MIT`, `CC BY 4.0`)
   - `source`: Origin or reference of the data (for example URL)
   - `domain`: Must match one of our supported domains (e.g. `"Physics"`, `"Finance"`)
+  - `python_version`: The version of the python. (e.g. `3.11.5`)
   - `required_dependencies`: List of dependencies with version required to run the rationale code
   - `name`: Name of the dataset (e.g., `"Loong_Mathematics"`)
   - `contributor`: Name of the dataset contributor
@@ -83,6 +85,7 @@ Organize your dataset like this:
       "license": "...",
       "source": "...",
       "domain": "...",
+      "python_version": "...",
       "required_dependencies": ["...", "..."],
       "name": "...",
       "contributor": "...",
