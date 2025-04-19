@@ -1795,7 +1795,7 @@
           "problem_id": "Linear Regression Models/gls",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1814,7 +1814,7 @@
           "problem_id": "Time Series Analysis/exponential_smoothing",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1833,7 +1833,7 @@
           "problem_id": "Time Series Analysis/markov_autoregression",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1852,7 +1852,7 @@
           "problem_id": "Time Series Analysis/exponential_smoothing",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1871,7 +1871,7 @@
           "problem_id": "Linear Regression Models/chi2_fitting",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1891,7 +1891,7 @@
           "problem_id": "Time Series Analysis/exponential_smoothing",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1910,7 +1910,7 @@
           "problem_id": "Time Series Analysis/markov_autoregression",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1929,7 +1929,7 @@
           "problem_id": "Linear Regression Models/gls",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1948,7 +1948,7 @@
           "problem_id": "Time Series Analysis/exponential_smoothing",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
@@ -1967,7 +1967,7 @@
           "problem_id": "Time Series Analysis/exponential_smoothing",
           "name": "stats_model",
           "date_created": "2025-04-15",
-          "contributor": "Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
+          "contributor": "Zhaowei Wang, Xingyue Huang, Zhuangzhuang He, Jinhe Bi",
           "domain": "Mathematical Programming",
           "required_dependencies": [
               "pandas==1.5.3",
