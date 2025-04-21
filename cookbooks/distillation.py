@@ -1,6 +1,8 @@
 import asyncio
 import json
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 from camel.datasets.static_dataset import StaticDataset
 from camel.datasets.few_shot_generator import FewShotGenerator
@@ -12,6 +14,7 @@ from camel.extractors import BaseExtractor, BoxedStrategy
 from camel.verifiers import MathVerifier, PythonVerifier
 from camel.environments import SingleStepEnv, Action
 from camel.logger import get_logger, set_log_level
+from camel.utils.commons import BatchProcessor
 
 # Set up logger
 logger = get_logger(__name__)
@@ -111,6 +114,18 @@ env = SingleStepEnv(generator, math_verifier)  # Use Math verifier here
 asyncio.run(env.setup())
 logger.info("Generator and environment initialized")
 
+# Initialize BatchProcessor for optimized processing
+logger.info("Initializing BatchProcessor for optimized performance...")
+# Adjust these parameters based on your specific system requirements
+batch_processor = BatchProcessor(
+    max_workers=64,  # Will be determined dynamically based on system resources
+    initial_batch_size=50,  # Start with a large batch size
+    monitoring_interval=3.0,  # Check system resources every 3 seconds
+    cpu_threshold=85.0,  # Scale down if CPU usage exceeds 85%
+    memory_threshold=90.0  # Scale down if memory usage exceeds 90%
+)
+logger.info(f"BatchProcessor initialized with {batch_processor.max_workers} workers and batch size {batch_processor.batch_size}")
+
 # Initialize agent for CoT generation
 agent = ChatAgent(model=model_deepseek)
 
@@ -131,48 +146,123 @@ target_size = 1000
 
 logger.info("Starting generation and verification loop...")
 
+# Function to process a single example
+async def process_example(agent, reset_agent=True):
+    start_time = time.time()
+    try:
+        # Reset environment to get next question
+        obs = await env.reset()
+        
+        # Generate response using DeepSeek model
+        deepseek_response = agent.step(USER_PROMPT + obs.question).msgs[0].content
+        
+        # Split the response into reasoning and answer parts
+        reasoning_part = ""
+        answer_part = deepseek_response
+        
+        if "<think>" in deepseek_response and "</think>" in deepseek_response:
+            parts = deepseek_response.split("</think>")
+            if len(parts) > 1:
+                reasoning_part = parts[0].replace("<think>", "").strip()
+                answer_part = parts[1].strip()
+        
+        # Get result from environment
+        next_obs, reward, done, info = await env.step(Action(index=0, llm_response=deepseek_response))
+        
+        # Create data entry
+        data_entry = {
+            "question": obs.question,
+            "answer": info['state'].final_answer if 'state' in info else '',
+            "response": answer_part,
+            "long_cot": reasoning_part,
+            "shots": obs.metadata.get('shots'),
+            "verified": reward > 0
+        }
+        
+        if reset_agent:
+            agent.reset()
+            
+        processing_time = time.time() - start_time
+        return data_entry, reward > 0, processing_time
+    except Exception as e:
+        logger.error(f"Error processing example: {str(e)}")
+        if reset_agent:
+            agent.reset()
+        return None, False, time.time() - start_time
+
+# Process a batch of examples
+async def process_batch(batch_size):
+    batch_results = []
+    
+    # Create a ThreadPoolExecutor for parallel processing
+    with ThreadPoolExecutor(max_workers=batch_processor.max_workers) as executor:
+        # Create agents for each worker thread
+        agents = [ChatAgent(model=model_deepseek) for _ in range(batch_processor.max_workers)]
+        
+        # Create coroutines for each example in the batch
+        futures = []
+        for i in range(batch_size):
+            # Distribute work across agents
+            agent_idx = i % len(agents)
+            # Last example should reset the agent
+            reset_agent = (i == batch_size - 1) or (agent_idx == (i + 1) % len(agents))
+            
+            # Schedule the work using ThreadPoolExecutor
+            loop = asyncio.get_event_loop()
+            future = loop.run_in_executor(
+                executor,
+                lambda agent=agents[agent_idx], reset=reset_agent: asyncio.run(process_example(agent, reset))
+            )
+            futures.append(future)
+        
+        # Gather results
+        for future in asyncio.as_completed(futures):
+            result = await future
+            if result[0] is not None:  # Only include successful results
+                batch_results.append(result)
+    
+    return batch_results
+
+# Main loop using BatchProcessor
 while sum(1 for entry in dataset if entry["verified"]) < target_size:
-    logger.info(f"Current verified count: {sum(1 for entry in dataset if entry['verified'])}/{target_size}")
+    verified_count = sum(1 for entry in dataset if entry["verified"])
+    logger.info(f"Current verified count: {verified_count}/{target_size}")
+    logger.info(f"Current batch size: {batch_processor.batch_size}, Workers: {batch_processor.max_workers}")
     
-    obs = asyncio.run(env.reset())
-    deepseek_response = agent.step(USER_PROMPT + obs.question).msgs[0].content
+    # Determine actual batch size (don't exceed what we need)
+    remaining = target_size - verified_count
+    actual_batch_size = min(batch_processor.batch_size, remaining * 2)  # Process more than needed accounting for failures
     
-    # Split the response into reasoning and answer parts
-    reasoning_part = ""
-    answer_part = deepseek_response
+    # Process the batch
+    batch_start_time = time.time()
+    batch_results = asyncio.run(process_batch(actual_batch_size))
+    batch_processing_time = time.time() - batch_start_time
     
-    if "<think>" in deepseek_response and "</think>" in deepseek_response:
-        parts = deepseek_response.split("</think>")
-        if len(parts) > 1:
-            reasoning_part = parts[0].replace("<think>", "").strip()
-            answer_part = parts[1].strip()
+    # Track successful examples and failures
+    successful = sum(1 for _, success, _ in batch_results if success)
+    batch_success = successful > 0
     
-    next_obs, reward, done, info = asyncio.run(env.step(Action(index=0, llm_response=deepseek_response)))
+    # Update batch size based on success rate and performance
+    batch_processor.adjust_batch_size(batch_success, batch_processing_time)
     
-    # Create and save data entry (both verified and unverified)
-    data_entry = {
-        "question": obs.question,
-        "answer": info['state'].final_answer if 'state' in info else '',
-        "response": answer_part,
-        "long_cot": reasoning_part,
-        "shots": obs.metadata.get('shots'),
-        "verified": reward > 0
-    }
+    # Update dataset with batch results
+    for data_entry, success, _ in batch_results:
+        dataset.append(data_entry)
+        # Track rejected entries
+        if not success:
+            num_rejected += 1
     
-    # Add entry to dataset (both verified and unverified)
-    dataset.append(data_entry)
-    # Save immediately
+    # Save updated dataset
     with open(OUTPUT_FILE, 'w') as f:
         json.dump(dataset, f, indent=2)
     
-    verified_count = sum(1 for entry in dataset if entry["verified"])
-    if reward > 0:
-        logger.info(f"Verification successful - Added verified entry ({verified_count}/{target_size} verified)")
-    else:
-        num_rejected += 1
-        logger.warning(f"Verification failed - Added unverified entry ({verified_count}/{target_size} verified)")
-    
-    agent.reset()
+    # Log batch results
+    logger.info(f"Batch processed: {len(batch_results)} examples, {successful} verified")
+    logger.info(f"Batch processing time: {batch_processing_time:.2f}s, {batch_processing_time/len(batch_results):.2f}s per example")
+    logger.info(f"Total verified: {sum(1 for entry in dataset if entry['verified'])}/{target_size}")
+
+# Reset the agent at the end
+agent.reset()
 
 # At the end, log statistics
 total_entries = len(dataset)
@@ -180,3 +270,12 @@ verified_entries = sum(1 for entry in dataset if entry["verified"])
 logger.info(f"Generation complete. Total entries: {total_entries}")
 logger.info(f"Verified entries: {verified_entries}")
 logger.info(f"Rejected entries: {num_rejected}")
+
+# Get and log performance metrics from BatchProcessor
+performance_metrics = batch_processor.get_performance_metrics()
+logger.info(f"BatchProcessor performance metrics:")
+logger.info(f"  Total batches processed: {performance_metrics['total_processed']}")
+logger.info(f"  Error rate: {performance_metrics['error_rate']:.2f}%")
+logger.info(f"  Average processing time: {performance_metrics['avg_processing_time']:.2f}s")
+logger.info(f"  Final batch size: {batch_processor.batch_size}")
+logger.info(f"  Final worker count: {batch_processor.max_workers}")
