@@ -420,7 +420,7 @@ def main():
         },
         "graph_discrete_math": {
             "path": data_dir / "graph_discrete_math" / "seed_dataset.json",
-            "train_ratio": 0.3  # Standard split
+            "train_ratio": 0.5  # Standard split
         },
         "logic": {
             "path": data_dir / "logic" / "seed_dataset.json",
