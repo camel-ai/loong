@@ -20,6 +20,7 @@
 <h4>
 
 [Community](https://github.com/camel-ai/camel#community) |
+[Paper](https://www.arxiv.org/abs/2509.03059) |
 [Cookbook](https://github.com/camel-ai/loong/tree/main/cookbooks) |
 [Datasets](https://huggingface.co/datasets/camel-ai/loong) |
 [Loong Blog](https://www.camel-ai.org/blogs/project-loong-synthetic-data-at-scale-through-verifiers) |
