@@ -166,16 +166,11 @@ If you're keen on exploring new research opportunities or discoveries with our p
 
 <br>
 
-- Join us ([*Discord*](https://discord.camel-ai.org/) or [*WeChat*](assets/wechat.jpg)) in pushing the boundaries of finding the scaling laws of agents. 
-<!---
-- Join WechatGroup for further discussions!>
+- Join us ([*Discord*](https://discord.camel-ai.org/) or *WeChat*) in pushing the boundaries of finding the scaling laws of agents.
 
-<br>
-
-<div align="">
-  <img src="assets/wechatgroup.jpeg" alt="WeChat Group QR Code">
+<div align="center">
+  <img src="assets/wechat_qr.jpg" width="200" alt="WeChat QR Code">
 </div>
--->
 
 ## 🖊️ Cite
 
@@ -204,6 +199,6 @@ If you find this repo useful, please cite:
 [star-image]: https://img.shields.io/github/stars/camel-ai/loong?label=stars&logo=github&color=brightgreen
 [star-url]: https://github.com/camel-ai/loong/stargazers
 [wechat-image]: https://img.shields.io/badge/WeChat-CamelAIOrg-brightgreen?logo=wechat&logoColor=white
-[wechat-url]: ./assets/wechat.jpg
+[wechat-url]: ./assets/wechat_qr.jpg
 [x-image]: https://img.shields.io/twitter/follow/CamelAIOrg?style=social
 [x-url]: https://x.com/CamelAIOrg
