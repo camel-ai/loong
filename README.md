@@ -179,10 +179,13 @@ If you find this repo useful, please cite:
 
 ```
 @misc{loong2025,
-  title={Loong: Synthesize Long CoTs at Scale through Verifiers},
-  author={CAMEL-AI.org},
-  url={https://github.com/camel-ai/loong},
-  year={2025}
+      title={Loong: Synthesize Long Chain-of-Thoughts at Scale through Verifiers}, 
+      author={Xingyue Huang and Rishabh and Gregor Franke and Ziyi Yang and Jiamu Bai and Weijie Bai and Jinhe Bi and Zifeng Ding and Yiqun Duan and Chengyu Fan and Wendong Fan and Xin Gao and Ruohao Guo and Yuan He and Zhuangzhuang He and Xianglong Hu and Neil Johnson and Bowen Li and Fangru Lin and Siyu Lin and Tong Liu and Yunpu Ma and Hao Shen and Hao Sun and Beibei Wang and Fangyijie Wang and Hao Wang and Haoran Wang and Yang Wang and Yifeng Wang and Zhaowei Wang and Ziyang Wang and Yifan Wu and Zikai Xiao and Chengxing Xie and Fan Yang and Junxiao Yang and Qianshuo Ye and Ziyu Ye and Guangtao Zeng and Yuwen Ebony Zhang and Zeyu Zhang and Zihao Zhu and Bernard Ghanem and Philip Torr and Guohao Li},
+      year={2025},
+      eprint={2509.03059},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2509.03059}, 
 }
 ```
 
